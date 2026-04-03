@@ -224,11 +224,11 @@ export default function Profile() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Monthly Income ($)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Monthly Income (₹)</label>
                     <input type="number" required value={formData.monthlyIncome} onChange={e => setFormData({...formData, monthlyIncome: e.target.value})} className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-semibold" />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Monthly Saving Goal ($)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Monthly Saving Goal (₹)</label>
                     <input type="number" required value={formData.savingGoal} onChange={e => setFormData({...formData, savingGoal: e.target.value})} className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-semibold text-indigo-600" />
                 </div>
 
@@ -237,35 +237,35 @@ export default function Profile() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Housing ($)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Housing (₹)</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Home className="w-4 h-4 text-gray-400" /></div>
                         <input type="number" value={formData.housingBudget} onChange={e => setFormData({...formData, housingBudget: e.target.value})} className="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
                     </div>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Utilities ($)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Utilities (₹)</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Zap className="w-4 h-4 text-gray-400" /></div>
                         <input type="number" value={formData.utilitiesBudget} onChange={e => setFormData({...formData, utilitiesBudget: e.target.value})} className="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
                     </div>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Groceries ($)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Groceries (₹)</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><ShoppingCart className="w-4 h-4 text-gray-400" /></div>
                         <input type="number" value={formData.groceriesBudget} onChange={e => setFormData({...formData, groceriesBudget: e.target.value})} className="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
                     </div>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Transport ($)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Transport (₹)</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Car className="w-4 h-4 text-gray-400" /></div>
                         <input type="number" value={formData.transportBudget} onChange={e => setFormData({...formData, transportBudget: e.target.value})} className="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
                     </div>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Insurance ($)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Insurance (₹)</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><ShieldCheck className="w-4 h-4 text-gray-400" /></div>
                         <input type="number" value={formData.insuranceBudget} onChange={e => setFormData({...formData, insuranceBudget: e.target.value})} className="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" />
