@@ -25,8 +25,6 @@ export default function Dashboard() {
     useEffect(() => {
         const fetchDashboardData = async () => {
             setLoading(true);
-
-            // Reset values first so empty months show 0
             setSummary({ totalIncome: 0, totalExpense: 0, balance: 0, month: '' });
             setScore(0);
             setCategoryBreakdown([]);
@@ -213,6 +211,25 @@ export default function Dashboard() {
                         </ResponsiveContainer>
                     </div>
                 </div>
+            </div>
+
+            {/* AI Insights */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-indigo-500" /> AI Insights
+                </h3>
+                {insights.length > 0 ? (
+                    <ul className="list-disc list-inside space-y-2 text-gray-700">
+                        {insights.map((insight, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                                <span className="text-indigo-500">•</span>
+                                <span>{insight}</span>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-gray-400">No insights available for this month.</p>
+                )}
             </div>
 
         </div>

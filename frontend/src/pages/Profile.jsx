@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
 import { AuthContext } from '../context/AuthContext';
-import { User, Phone, MapPin, DollarSign, Target, Home, Zap, ShoppingCart, Car, ShieldCheck, Edit3 } from 'lucide-react';
+import { User, Phone, MapPin, Wallet, Target, Home, Zap, ShoppingCart, Car, ShieldCheck, Edit3 } from 'lucide-react';
 
 export default function Profile() {
     const { user } = useContext(AuthContext);
@@ -124,10 +124,10 @@ export default function Profile() {
                     <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-4">
                         <div className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl">
                             <div className="flex items-center gap-3">
-                                <div className="p-2.5 bg-green-100 text-green-600 rounded-xl"><DollarSign className="w-5 h-5" /></div>
+                                <div className="p-2.5 bg-green-100 text-green-600 rounded-xl"><Wallet className="w-5 h-5" /></div>
                                 <div>
                                     <p className="text-sm text-gray-500 font-medium">Monthly Income</p>
-                                    <p className="font-bold text-xl text-gray-900">${profile?.monthlyIncome?.toLocaleString() || '0'}</p>
+                                    <p className="font-bold text-xl text-gray-900">₹{profile?.monthlyIncome?.toLocaleString() || '0'}</p>
                                 </div>
                             </div>
                         </div>
@@ -136,7 +136,7 @@ export default function Profile() {
                                 <div className="p-2.5 bg-indigo-100 text-indigo-600 rounded-xl"><Target className="w-5 h-5" /></div>
                                 <div>
                                     <p className="text-sm text-gray-500 font-medium">Monthly Saving Goal</p>
-                                    <p className="font-bold text-xl text-gray-900">${profile?.savingGoal?.toLocaleString() || '0'}</p>
+                                    <p className="font-bold text-xl text-gray-900">₹{profile?.savingGoal?.toLocaleString() || '0'}</p>
                                 </div>
                             </div>
                         </div>
@@ -151,35 +151,35 @@ export default function Profile() {
                                 <div className="p-2 bg-blue-50 text-blue-500 rounded-lg"><Home className="w-4 h-4" /></div>
                                 <span className="font-medium text-gray-700">Housing</span>
                             </div>
-                            <span className="font-bold text-gray-900">${profile?.housingBudget?.toLocaleString() || '0'}</span>
+                            <span className="font-bold text-gray-900">₹{profile?.housingBudget?.toLocaleString() || '0'}</span>
                         </div>
                         <div className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-yellow-50 text-yellow-500 rounded-lg"><Zap className="w-4 h-4" /></div>
                                 <span className="font-medium text-gray-700">Utilities</span>
                             </div>
-                            <span className="font-bold text-gray-900">${profile?.utilitiesBudget?.toLocaleString() || '0'}</span>
+                            <span className="font-bold text-gray-900">₹{profile?.utilitiesBudget?.toLocaleString() || '0'}</span>
                         </div>
                         <div className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-emerald-50 text-emerald-500 rounded-lg"><ShoppingCart className="w-4 h-4" /></div>
                                 <span className="font-medium text-gray-700">Groceries</span>
                             </div>
-                            <span className="font-bold text-gray-900">${profile?.groceriesBudget?.toLocaleString() || '0'}</span>
+                            <span className="font-bold text-gray-900">₹{profile?.groceriesBudget?.toLocaleString() || '0'}</span>
                         </div>
                         <div className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-orange-50 text-orange-500 rounded-lg"><Car className="w-4 h-4" /></div>
                                 <span className="font-medium text-gray-700">Transport</span>
                             </div>
-                            <span className="font-bold text-gray-900">${profile?.transportBudget?.toLocaleString() || '0'}</span>
+                            <span className="font-bold text-gray-900">₹{profile?.transportBudget?.toLocaleString() || '0'}</span>
                         </div>
                         <div className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-purple-50 text-purple-500 rounded-lg"><ShieldCheck className="w-4 h-4" /></div>
                                 <span className="font-medium text-gray-700">Insurance</span>
                             </div>
-                            <span className="font-bold text-gray-900">${profile?.insuranceBudget?.toLocaleString() || '0'}</span>
+                            <span className="font-bold text-gray-900">₹{profile?.insuranceBudget?.toLocaleString() || '0'}</span>
                         </div>
                     </div>
                 </div>
