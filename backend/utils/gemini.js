@@ -10,22 +10,33 @@ function cleanJSON(text) {
 
 // 🧠 Extract intent from user message
 async function getIntent(userMessage) {
- const prompt = `
+  const today = new Date().toISOString().split('T')[0];
+  const prompt = `
 You are an AI that converts user queries into structured JSON.
+Current Date: ${today}
 
 Database schema:
 Transaction:
 - userId: ObjectId
 - amount: Number
 - category: String
+- description: String
 - type: "expense" | "income"
-- date: Date
+- paymentDate: Date
 
 Return ONLY VALID JSON:
 
 {
-  "intent": "sum | list | count",
-  "type": "expense | income | all",
+  "intent": "add | delete | sum | list | count",
+  "operations": [
+    {
+      "amount": Number (optional),
+      "description": String (optional, exact noun or phrase),
+      "category": String (optional, categorize into: Food & Dining, Transportation, Housing, Utilities, Shopping, Entertainment, Health, Income, Other),
+      "type": "expense | income",
+      "action_date": "YYYY-MM-DD" (optional, explicitly format date if mentioned or if it means today)
+    }
+  ],
   "filters": {
     "category": "",
     "date_range": "today | yesterday | this_week | last_7_days | this_month | last_month"
@@ -33,10 +44,11 @@ Return ONLY VALID JSON:
 }
 
 Rules:
-- "total spend" → type = expense
-- "income" → type = income
-- "savings" → type = all (calculate later)
-- category optional
+- "spent 500 on groceries and 200 on an uber today" → intent: "add", operations: [{ "amount": 500, "description": "groceries", "category": "Shopping", "type": "expense", "action_date": "${today}" }, { "amount": 200, "description": "uber", "category": "Transportation", "type": "expense", "action_date": "${today}" }]
+- "got 1000 salary yesterday" → intent: "add", operations: [{ "amount": 1000, "description": "salary", "category": "Income", "type": "income", "action_date": "(yesterday's date)" }]
+- "delete lunch transaction" → intent: "delete", operations: [{ "description": "lunch", "type": "expense" }]
+- If taking actions (add/delete), return all recognized entities in 'operations'.
+- For non-adding/deleting queries (sum, list), omit operations and use 'filters'.
 - no text outside JSON
 
 User: "${userMessage}"
@@ -104,4 +116,42 @@ Answer:
   }
 }
 
-module.exports = { getIntent, formatAnswer };
+// 🏷️ Categorize expense description
+async function categorizeExpense(description) {
+  const categories = [
+    "Food & Dining",
+    "Transportation",
+    "Housing",
+    "Utilities",
+    "Shopping",
+    "Entertainment",
+    "Health",
+    "Other"
+  ];
+
+  const prompt = `You are a financial assistant.
+Map the following expense item to exactly one of these categories:
+${categories.join(", ")}
+
+Expense Item: "${description}"
+
+Respond ONLY with the category name from the list. If unsure, use "Other".`;
+
+  try {
+    const res = await axios.post(
+      `${GEMINI_URL}?key=${process.env.GEMINI_API_KEY}`,
+      {
+        contents: [{ parts: [{ text: prompt }] }],
+      }
+    );
+
+    const category = res.data.candidates[0].content.parts[0].text.trim();
+    const matchedCategory = categories.find(c => c.toLowerCase() === category.toLowerCase());
+    return matchedCategory || "Other";
+  } catch (err) {
+    console.error("Categorize error:", err.message);
+    return "Other";
+  }
+}
+
+module.exports = { getIntent, formatAnswer, categorizeExpense };

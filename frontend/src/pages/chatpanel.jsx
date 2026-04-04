@@ -12,6 +12,8 @@ export default function ChatPanel() {
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [expenseData, setExpenseData] = useState({ amount: "", category: "", note: "", date: "" });
 
   const bottomRef = useRef(null);
 
@@ -20,11 +22,18 @@ export default function ChatPanel() {
   }, [messages]);
 
   // 🔥 SEND MESSAGE (API CONNECTED)
-  const sendMessage = async (customMessage = null) => {
+  const sendMessage = async (customMessage = null, isExpense = false) => {
     const msgText = customMessage || input;
-    if (!msgText.trim()) return;
+    if (!msgText.trim() && !isExpense) return;
 
-    const userMsg = { sender: "user", text: msgText };
+    if (isExpense && (!expenseData.amount || !expenseData.category)) return;
+
+    const userMsg = {
+      sender: "user",
+      text: isExpense
+        ? `Add ${expenseData.amount} for ${expenseData.category} ${expenseData.note ? `(${expenseData.note})` : ""} ${expenseData.date ? `on ${expenseData.date}` : ""}`.trim()
+        : msgText,
+    };
     setMessages((prev) => [...prev, userMsg]);
 
     setInput("");
@@ -39,7 +48,11 @@ export default function ChatPanel() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ message: msgText }),
+        body: JSON.stringify({
+          message: isExpense
+            ? `Add ${expenseData.amount} for ${expenseData.category} ${expenseData.note ? `(${expenseData.note})` : ""} ${expenseData.date ? `on ${expenseData.date}` : ""}`.trim()
+            : msgText,
+        }),
       });
 
       const data = await res.json();
@@ -52,17 +65,19 @@ export default function ChatPanel() {
       };
 
       setMessages((prev) => [...prev, botMsg]);
-      if (!botMsg.data||botMsg.type=="list"){setMessages((prev) => [
-        ...prev,
-        {
-          sender: "bot",
-          text: "Hi 👋 I’m your AI Expense Buddy. What do you want to do?",
-          options: ["Show Expense", "View Spending", "Check Balance"],
-        },
-      ]);}
+
+      if (!botMsg.data || botMsg.type === "list") {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "bot",
+            text: "Hi 👋 I’m your AI Expense Buddy. What do you want to do?",
+            options: ["Show Expense", "View Spending", "Check Balance"],
+          },
+        ]);
+      }
     } catch (err) {
       console.error(err);
-
       setMessages((prev) => [
         ...prev,
         {
@@ -70,9 +85,12 @@ export default function ChatPanel() {
           text: "❌ Error talking to server",
         },
       ]);
-      
     } finally {
       setLoading(false);
+      if (isExpense) {
+        setShowQuickAdd(false);
+        setExpenseData({ amount: "", category: "", note: "", date: "" });
+      }
     }
   };
 
@@ -80,144 +98,220 @@ export default function ChatPanel() {
     sendMessage(option);
   };
 
+  const handleQuickAddSubmit = () => {
+    sendMessage("", true);
+  };
+
   return (
-    <div className="flex h-full w-full bg-gray-100 overflow-hidden">
-      {/* Sidebar */}
-      <div className="hidden md:flex flex-col bg-white border-r min-w-[220px] max-w-[300px] w-[20%] resize-x overflow-auto">
-        <div className="p-4">
-          <h2 className="text-xl font-bold mb-4">FinChat</h2>
-          <button className="w-full bg-indigo-600 text-white py-2 rounded-lg">
+    <div className="flex items-center justify-center h-full w-full bg-slate-50 p-2 md:p-6 font-sans">
+      <div className="flex w-full max-w-5xl h-full md:h-[88vh] bg-white md:rounded-[2rem] shadow-sm md:shadow-2xl overflow-hidden border border-slate-200/60">
+        {/* Sidebar */}
+        <div className="hidden md:flex flex-col bg-slate-50/50 border-r border-slate-100 min-w-[260px] w-[25%] p-6">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="bg-indigo-600 p-2.5 rounded-2xl text-white shadow-indigo-200 shadow-lg">
+              <Bot className="w-6 h-6" />
+            </div>
+            <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">FinChat</h2>
+          </div>
+          
+          <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-2xl transition-all shadow-md hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-2">
             + New Chat
           </button>
-          <div className="mt-6 text-gray-500 text-sm">
-            Recent chats coming soon...
+          
+          <div className="mt-10">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 ml-1">Recent Conversations</h4>
+            <div className="text-slate-400 text-sm text-center p-6 bg-slate-100/50 rounded-2xl border border-dashed border-slate-200">
+              Chats coming soon...
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Chat Section */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <div className="bg-white border-b px-4 md:px-6 py-4 font-semibold">
-          AI Expense Assistant
-        </div>
+        {/* Chat Section */}
+        <div className="flex-1 flex flex-col min-w-0 bg-white relative">
+          {/* Header */}
+          <div className="bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 py-5 flex items-center justify-between sticky top-0 z-10">
+            <div className="flex items-center gap-3">
+              <div className="md:hidden bg-indigo-600 p-2 rounded-xl text-white shadow-md">
+                <Bot className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-slate-800 text-lg">AI Expense Assistant</h3>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full border border-green-100">
+               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+               <span className="text-xs font-semibold text-green-700">Online</span>
+            </div>
+          </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-4">
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"
-                }`}
-            >
-              <div className="flex items-start gap-3">
-                {msg.sender === "bot" && (
-                  <div className="bg-indigo-100 p-2 rounded-full">
-                    <Bot className="w-4 h-4 text-indigo-600" />
-                  </div>
-                )}
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-4 md:px-8 py-8 space-y-8 scroll-smooth will-change-scroll">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`flex flex-col ${
+                  msg.sender === "user" ? "items-end" : "items-start"
+                } animate-in slide-in-from-bottom-2 fade-in duration-300`}
+              >
+                <div className={`flex items-end gap-3 max-w-[90%] md:max-w-[75%] ${msg.sender === "user" ? "flex-row-reverse" : "flex-row"}`}>
+                  
+                  {msg.sender === "bot" && (
+                    <div className="hidden md:flex flex-shrink-0 bg-white border shadow-sm border-slate-200 p-2.5 rounded-full mb-1">
+                      <Bot className="w-5 h-5 text-indigo-600" />
+                    </div>
+                  )}
 
-                <div
-                  className={`px-4 py-2 rounded-2xl text-sm break-words ${msg.sender === "user"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-white border"
+                  <div
+                    className={`px-6 py-4 text-[15px] leading-relaxed break-words whitespace-pre-wrap ${
+                      msg.sender === "user" 
+                        ? "bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-[1.5rem] rounded-br-sm shadow-indigo-100 shadow-md" 
+                        : "bg-white border border-slate-100 shadow-sm shadow-slate-100/50 text-slate-700 rounded-[1.5rem] rounded-bl-sm"
                     }`}
-                >
-                  {msg.text}
+                  >
+                    {msg.text}
 
-                  {/* 🔥 LIST UI RENDER */}
-                  {msg.type === "list" && msg.data && (
-                    <div className="mt-3 space-y-2">
-                      {msg.data.map((item, i) => (
-                        <div
-                          key={i}
-                          className="bg-gray-50 border rounded-xl p-3 text-xs"
-                        >
-                          <div className="flex justify-between font-medium">
-                            <span>{item.category}</span>
-                            <span className="text-indigo-600">
-                              ₹{item.amount}
-                            </span>
+                    {/* 🔥 LIST UI */}
+                    {msg.type === "list" && msg.data && (
+                      <div className="mt-5 space-y-3">
+                        {msg.data.map((item, i) => (
+                          <div key={i} className="bg-slate-50/80 border border-slate-100 hover:border-indigo-200 hover:shadow-md transition-all rounded-2xl p-4 text-sm group">
+                            <div className="flex justify-between items-center font-bold mb-1.5">
+                              <span className="text-slate-700 capitalize">{item.category}</span>
+                              <span className="text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg">₹{item.amount}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs">
+                              {item.description && <span className="text-slate-500 font-medium truncate max-w-[140px] block">{item.description}</span>}
+                              <span className="text-slate-400 font-medium ml-auto">
+                                {new Date(item.paymentDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </span>
+                            </div>
                           </div>
+                        ))}
+                      </div>
+                    )}
 
-                          <div className="text-gray-400 mt-1">
-                            {item.date}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {msg.type === "options" && msg.data && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {msg.data.map((opt, i) => (
-                        <button
-                          key={i}
-                          onClick={() => handleOptionClick(opt)}
-                          className="px-4 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-xs hover:bg-indigo-200 transition"
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                    {msg.type === "options" && msg.data && (
+                      <div className="flex flex-wrap gap-2.5 mt-5">
+                        {msg.data.map((opt, i) => (
+                          <button
+                            key={i}
+                            onClick={() => handleOptionClick(opt)}
+                            className="px-5 py-2.5 bg-indigo-50/50 text-indigo-700 font-semibold rounded-full text-sm hover:bg-indigo-600 hover:text-white transition-all duration-200 border border-indigo-100"
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {msg.sender === "user" && (
-                  <div className="bg-gray-300 p-2 rounded-full">
-                    <User className="w-4 h-4 text-gray-700" />
+                {/* Introductory Options */}
+                {msg.options && (
+                  <div className="flex flex-wrap gap-2.5 mt-4 md:ml-[3.25rem]">
+                    {msg.options.map((opt, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleOptionClick(opt)}
+                        className="px-5 py-2.5 bg-white text-indigo-600 font-semibold rounded-full text-sm hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-slate-200 hover:border-transparent hover:shadow-md"
+                      >
+                        {opt}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
+            ))}
 
-              {/* Options */}
-              {msg.options && (
-                <div className="flex flex-wrap gap-2 mt-2 ml-10">
-                  {msg.options.map((opt, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleOptionClick(opt)}
-                      className="px-4 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-xs hover:bg-indigo-200 transition"
-                    >
-                      {opt}
-                    </button>
-                  ))}
+            {/* Loading Indicator */}
+            {loading && (
+              <div className="flex items-center gap-3 text-slate-400 text-sm font-medium animate-pulse ml-2 md:ml-12">
+                <Bot className="w-5 h-5" />
+                <div className="flex gap-1.5">
+                  <span className="w-2 h-2 bg-indigo-300 rounded-full animate-bounce" style={{animationDelay: "0ms"}}></span>
+                  <span className="w-2 h-2 bg-indigo-300 rounded-full animate-bounce" style={{animationDelay: "150ms"}}></span>
+                  <span className="w-2 h-2 bg-indigo-300 rounded-full animate-bounce" style={{animationDelay: "300ms"}}></span>
                 </div>
-              )}
-            </div>
-          ))}
+              </div>
+            )}
 
-          {/* Loading */}
-          {loading && (
-            <div className="flex items-center gap-2 text-gray-500 text-sm">
-              <Bot className="w-4 h-4" />
-              Thinking...
+            <div ref={bottomRef} className="h-4" />
+          </div>
+
+          {/* Quick Add Form */}
+          {showQuickAdd && (
+            <div className="bg-white border-t border-slate-100 p-4 md:px-8 md:py-6 animate-in slide-in-from-bottom">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Quick Expense</h4>
+                <button onClick={() => setShowQuickAdd(false)} className="text-xs text-slate-400 hover:text-slate-600 font-bold uppercase tracking-wider">Cancel</button>
+              </div>
+              <div className="flex gap-3 flex-wrap md:flex-nowrap">
+                <input
+                  type="number"
+                  placeholder="₹ Amount"
+                  value={expenseData.amount}
+                  onChange={(e) => setExpenseData({ ...expenseData, amount: e.target.value })}
+                  className="px-4 py-3 rounded-2xl border border-slate-200 flex-1 min-w-[100px] outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all text-sm font-medium"
+                />
+                <input
+                  type="text"
+                  placeholder="Category..."
+                  value={expenseData.category}
+                  onChange={(e) => setExpenseData({ ...expenseData, category: e.target.value })}
+                  className="px-4 py-3 rounded-2xl border border-slate-200 flex-1 min-w-[120px] outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all text-sm font-medium"
+                />
+                <input
+                  type="text"
+                  placeholder="Note..."
+                  value={expenseData.note}
+                  onChange={(e) => setExpenseData({ ...expenseData, note: e.target.value })}
+                  className="px-4 py-3 rounded-2xl border border-slate-200 flex-1 min-w-[100px] outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all text-sm font-medium"
+                />
+                <input
+                  type="date"
+                  value={expenseData.date}
+                  onChange={(e) => setExpenseData({ ...expenseData, date: e.target.value })}
+                  className="px-4 py-3 rounded-2xl border border-slate-200 flex-1 min-w-[125px] outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all text-sm font-medium text-slate-500"
+                />
+                <button
+                  onClick={handleQuickAddSubmit}
+                  className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-indigo-700 shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all text-sm whitespace-nowrap"
+                >
+                  Save
+                </button>
+              </div>
             </div>
           )}
 
-          <div ref={bottomRef} />
-        </div>
-
-        {/* Input */}
-        <div className="sticky bottom-0 bg-gray-100 px-4 pb-4 pt-2">
-          <div className="mx-auto max-w-3xl">
-            <div className="bg-white shadow-lg border rounded-2xl flex items-center px-4 py-3 gap-2">
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Or ask anything with AI..."
-                className="flex-1 outline-none text-sm bg-transparent"
-              />
-
-              <button
-                onClick={() => sendMessage()}
-                className="bg-indigo-600 text-white p-2 rounded-xl hover:opacity-90 disabled:opacity-50"
-                disabled={loading}
-              >
-                <Send className="w-4 h-4" />
-              </button>
+          {/* Input Bar */}
+          {!showQuickAdd && (
+            <div className="bg-white/90 backdrop-blur-xl p-4 md:p-6 z-10 sticky bottom-0">
+              <div className="flex items-center bg-slate-50 border border-slate-200 rounded-[1.5rem] px-2 py-2 focus-within:ring-4 focus-within:ring-indigo-50 focus-within:border-indigo-300 transition-all">
+                <button
+                  onClick={() => setShowQuickAdd(true)}
+                  className="p-3 bg-white text-indigo-600 rounded-xl shadow-sm hover:shadow border border-slate-100 mx-1 transition-all group shrink-0"
+                  title="Quick Add"
+                >
+                  <span className="font-black text-lg leading-none group-hover:scale-110 block transform transition-transform">+</span>
+                </button>
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                  placeholder="Ask about your spending..."
+                  className="flex-1 outline-none text-[15px] font-medium bg-transparent px-4 py-2 text-slate-700 placeholder-slate-400"
+                />
+                <button
+                  onClick={() => sendMessage()}
+                  className="bg-indigo-600 text-white p-3.5 rounded-xl shadow-md hover:bg-indigo-700 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:transform-none mx-1 shrink-0"
+                  disabled={loading || (!input.trim())}
+                >
+                  <Send className="w-5 h-5 ml-0.5" />
+                </button>
+              </div>
+              <div className="text-center mt-3">
+                <span className="text-[10px] font-bold tracking-widest uppercase text-slate-300">Powered by Gemini AI</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

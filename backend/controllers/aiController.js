@@ -1,14 +1,15 @@
 const Transaction = require("../models/Transaction");
 const { getDateFilter } = require("../utils/aiUtils");
-const { getIntent, formatAnswer } = require("../utils/gemini"); // import Gemini helpers
+const { getIntent, formatAnswer, categorizeExpense } = require("../utils/gemini"); // import Gemini helpers
 
 exports.handleAIChat = async (req, res) => {
   try {
     const { message } = req.body;
     const userId = req.user.userId || req.user.id;
-
-    const msg = message.toLowerCase();
+    const msg = message.trim().toLowerCase();
     let query = { userId };
+
+
 
     // =========================
     // 🔥 VIEW SPENDING (SMART TEXT)
@@ -19,10 +20,10 @@ exports.handleAIChat = async (req, res) => {
       msg.includes("this month") ||
       msg.includes("last month")
     ) {
-      if (msg.includes("this month")) query.date = getDateFilter("this_month");
-      else if (msg.includes("last month")) query.date = getDateFilter("last_month");
+      if (msg.includes("this month")) query.paymentDate = getDateFilter("this_month");
+      else if (msg.includes("last month")) query.paymentDate = getDateFilter("last_month");
 
-      const transactions = await Transaction.find(query).sort({ date: -1 });
+      const transactions = await Transaction.find(query).sort({ paymentDate: -1 });
 
       return res.json({
         reply: "Here are your transactions 📊",
@@ -49,7 +50,8 @@ exports.handleAIChat = async (req, res) => {
 
     if (matchedCategory) {
       query.category = new RegExp(matchedCategory, "i");
-      if (msg.includes("this month")) query.date = getDateFilter("this_month");
+      if (msg.includes("this month")) query.paymentDate = getDateFilter("this_month");
+      else if (msg.includes("last month")) query.paymentDate = getDateFilter("last_month");
 
       const transactions = await Transaction.find(query);
       const total = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
@@ -80,7 +82,7 @@ exports.handleAIChat = async (req, res) => {
     }
 
     // =========================
-    // 🔥 ADD EXPENSE FLOW
+    // 🔥 ADD EXPENSE OPTION (BUTTON FLOW)
     // =========================
     if (msg.includes("show expense")) {
       return res.json({
@@ -102,9 +104,54 @@ exports.handleAIChat = async (req, res) => {
     // =========================
     // 🔥 FALLBACK → Gemini AI
     // =========================
-    // Use Gemini to get intent + query DB if necessary
     const intentData = await getIntent(msg); // parses user message
     let transactions = [];
+
+    if (intentData.intent === "add" && intentData.operations && intentData.operations.length > 0) {
+      const addedItems = [];
+      for (const op of intentData.operations) {
+        if (!op.amount) continue;
+        await Transaction.create({
+          userId,
+          amount: op.amount,
+          category: op.category || "Other",
+          description: op.description || "",
+          type: op.type || "expense",
+          paymentDate: op.action_date ? new Date(op.action_date) : new Date(),
+        });
+        addedItems.push(`₹${op.amount} for ${op.description || op.category || "item"}`);
+      }
+      return res.json({
+        reply: addedItems.length > 0 ? `✨ Added new transactions:\n- ${addedItems.join("\n- ")}` : `❌ Couldn't understand the exact amounts to add.`,
+        type: "text"
+      });
+    }
+
+    if (intentData.intent === "delete" && intentData.operations && intentData.operations.length > 0) {
+      const deletedItems = [];
+      for (const op of intentData.operations) {
+        let deleteQuery = { userId };
+        if (op.amount) deleteQuery.amount = op.amount;
+        if (op.description) deleteQuery.description = new RegExp(op.description, "i");
+        if (op.type && op.type !== "all") deleteQuery.type = op.type;
+        
+        if (op.action_date) {
+          const d = new Date(op.action_date);
+          const nextDay = new Date(d);
+          nextDay.setDate(nextDay.getDate() + 1);
+          deleteQuery.paymentDate = { $gte: d, $lt: nextDay };
+        }
+
+        const deleted = await Transaction.findOneAndDelete(deleteQuery);
+        if (deleted) {
+          deletedItems.push(`🗑️ Deleted ${deleted.description || deleted.category} (₹${deleted.amount})`);
+        }
+      }
+      return res.json({
+        reply: deletedItems.length > 0 ? deletedItems.join("\n") : `❌ Couldn't find matching transactions to delete based on your request.`,
+        type: "text"
+      });
+    }
 
     if (intentData.intent === "list") {
       const filterQuery = { userId };
@@ -112,7 +159,7 @@ exports.handleAIChat = async (req, res) => {
         filterQuery.category = new RegExp(intentData.filters.category, "i");
 
       if (intentData.filters.date_range)
-        filterQuery.date = getDateFilter(intentData.filters.date_range);
+        filterQuery.paymentDate = getDateFilter(intentData.filters.date_range);
 
       transactions = await Transaction.find(filterQuery);
     }

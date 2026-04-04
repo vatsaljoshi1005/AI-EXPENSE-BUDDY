@@ -8,16 +8,40 @@ export default function Signup() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({ username: '', email: '', password: '' });
     const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     if (user) return <Navigate to="/dashboard" />;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+
+        const { username, email, password } = formData;
+
+        if (username.trim().length < 3) {
+            return setError("Username must be at least 3 characters.");
+        }
+
+        // Validate basic email type format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return setError("Please enter a valid email type (e.g. name@example.com).");
+        }
+
+        if (password.length < 6) {
+            return setError("Password must be at least 6 characters.");
+        }
+
         setIsLoading(true);
-        const success = await signup(formData.username, formData.email, formData.password);
+        const success = await signup(username, email, password);
         setIsLoading(false);
-        if (success) navigate('/login');
+        
+        if (success) {
+            navigate('/login');
+        } else {
+            setError("Signup failed. That email might already be registered.");
+        }
     };
 
     return (
@@ -27,6 +51,12 @@ export default function Signup() {
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
                     <p className="text-gray-500">Join ExpenseBuddy today</p>
                 </div>
+
+                {error && (
+                    <div className="mb-6 animate-in slide-in-from-top-2 flex p-4 bg-red-50 border border-red-100 rounded-xl">
+                        <p className="text-red-600 text-[14px] font-medium">{error}</p>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>

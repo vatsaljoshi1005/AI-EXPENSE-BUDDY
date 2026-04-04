@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import {
     Wallet, TrendingUp, TrendingDown,
-    Target, Zap
+    Target, Zap, Bell, X
 } from 'lucide-react';
 
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
@@ -21,6 +21,8 @@ export default function Dashboard() {
     const [prediction, setPrediction] = useState(0);
     const [insights, setInsights] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [recentTx, setRecentTx] = useState([]);
+    const [showAlertModal, setShowAlertModal] = useState(false);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -86,6 +88,20 @@ export default function Dashboard() {
                 // --- INSIGHTS ---
                 setInsights(insightsRes.data.insights || []);
 
+                // --- ALERTS TRIGGER ---
+                const todayMidnight = new Date();
+                todayMidnight.setHours(0,0,0,0);
+                const yesterdayMidnight = new Date(todayMidnight);
+                yesterdayMidnight.setDate(todayMidnight.getDate() - 1);
+
+                const recent = transactionsRes.data.filter(tx => new Date(tx.paymentDate) >= yesterdayMidnight);
+                setRecentTx(recent);
+
+                if (!sessionStorage.getItem("dashboardAlertShown") && (insightsRes.data.insights?.length > 0 || recent.length > 0)) {
+                    setShowAlertModal(true);
+                    sessionStorage.setItem("dashboardAlertShown", "true");
+                }
+
             } catch (error) {
                 console.error("Error fetching dashboard data:", error);
             } finally {
@@ -108,6 +124,65 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-6">
+
+            {/* ALERT MODAL */}
+            {showAlertModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-100">
+                        <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 p-6 text-white flex justify-between items-center shadow-inner">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+                                    <Bell className="w-5 h-5 animate-bounce" />
+                                </div>
+                                <h3 className="text-xl font-bold tracking-tight">Welcome Back!</h3>
+                            </div>
+                            <button onClick={() => setShowAlertModal(false)} className="text-white/70 hover:text-white transition-transform hover:scale-110 bg-white/10 p-2 rounded-full">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-8 space-y-7 bg-slate-50/50">
+                            {/* Insights alert */}
+                            {insights.length > 0 && (
+                                <div>
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Latest Insight</h4>
+                                    <div className="bg-white shadow-sm border border-indigo-100 rounded-2xl p-4 text-indigo-800 text-sm font-medium leading-relaxed relative overflow-hidden">
+                                        <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+                                        💡 {insights[0]}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Recent transactions */}
+                            <div>
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Recent Activity</h4>
+                                {recentTx.length > 0 ? (
+                                    <div className="space-y-2.5">
+                                        {recentTx.slice(0, 3).map((tx, idx) => (
+                                            <div key={idx} className="flex justify-between items-center p-3.5 bg-white shadow-sm rounded-2xl border border-slate-100/80">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-2.5 h-2.5 rounded-full shadow-sm ${tx.type === 'income' ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                                                    <span className="font-bold text-slate-700 capitalize text-[15px]">{tx.category}</span>
+                                                </div>
+                                                <span className={`font-bold text-[15px] ${tx.type === 'income' ? 'text-green-600' : 'text-slate-800'}`}>
+                                                    {tx.type === 'income' ? '+' : '-'}₹{tx.amount}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-slate-400 text-sm font-medium bg-white p-5 rounded-2xl border border-dashed border-slate-200 text-center shadow-sm">
+                                        No recent transactions. Add one to keep tracking!
+                                    </div>
+                                )}
+                            </div>
+
+                            <button onClick={() => setShowAlertModal(false)} className="w-full py-4 mt-2 bg-indigo-600 text-white rounded-2xl font-bold text-[15px] hover:bg-indigo-700 shadow-md shadow-indigo-200 hover:shadow-xl hover:-translate-y-0.5 transition-all">
+                                Awesome, let's go!
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* HEADER */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

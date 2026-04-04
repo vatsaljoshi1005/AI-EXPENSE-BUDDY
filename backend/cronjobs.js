@@ -8,18 +8,31 @@ if (mongoose.connection.readyState === 0) {
   mongoose.connect(process.env.MONGO_URI);
 }
 
-// --- 1. Inactive users (2 days) ---
+// --- 1. Missing transactions reminder (daily check for yesterday) ---
 cron.schedule('0 9 * * *', async () => { // every day 9 AM
-  const twoDaysAgo = new Date(Date.now() - 2*24*60*60*1000);
-  const inactiveUsers = await User.find({ lastActive: { $lt: twoDaysAgo } });
+  const yesterdayStart = new Date();
+  yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+  yesterdayStart.setHours(0, 0, 0, 0);
 
-  inactiveUsers.forEach(user => {
-    sendEmail(
-      user.email,
-      "We Miss You at AI Expense Buddy!",
-      `<p>Hi ${user.name},<br><br>It looks like you haven’t logged in for 2 days. Check your expenses and stay on track!</p>`
-    );
-  });
+  const yesterdayEnd = new Date();
+  yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
+  yesterdayEnd.setHours(23, 59, 59, 999);
+
+  const users = await User.find({});
+  for (const user of users) {
+    const hasTransactionsYesterday = await Transaction.exists({
+      userId: user._id,
+      paymentDate: { $gte: yesterdayStart, $lte: yesterdayEnd }
+    });
+
+    if (!hasTransactionsYesterday) {
+      sendEmail(
+        user.email,
+        "Friendly Reminder: Time to log your expenses! 💰",
+        `<p>Hi ${user.name},</p><p>We noticed you haven't added any transactions yesterday. Just a friendly reminder to not forget to add your expenses! Keeping a daily habit of logging is the best way to stay on top of your finances.</p><p>- AI Expense Buddy</p>`
+      );
+    }
+  }
 });
 
 // --- 2. Weekly summary (every Monday 8 AM) ---

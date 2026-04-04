@@ -7,7 +7,7 @@ require('dotenv').config();
 const app = express();
 app.use(express.json()); 
 app.use(cors());
-// require('./cronjobs'); // <-- runs in background
+require('./cronjobs'); // <-- runs in background
 // router.post("/ai/spending", authMiddleware, getSpendingByMonth);
 // app.post("/api/spending", authMiddleware, getSpendingByMonth);
 const aiRoutes = require("./routes/ai");
