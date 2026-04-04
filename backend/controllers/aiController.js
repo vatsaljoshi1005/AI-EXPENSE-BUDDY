@@ -153,6 +153,40 @@ exports.handleAIChat = async (req, res) => {
       });
     }
 
+    if (intentData.intent === "update" && intentData.operations && intentData.operations.length > 0) {
+      const updatedItems = [];
+      for (const op of intentData.operations) {
+        let updateQuery = { userId };
+        if (op.amount) updateQuery.amount = op.amount;
+        if (op.description) updateQuery.description = new RegExp(op.description, "i");
+        if (op.type && op.type !== "all") updateQuery.type = op.type;
+        
+        if (op.action_date) {
+          const d = new Date(op.action_date);
+          const nextDay = new Date(d);
+          nextDay.setDate(nextDay.getDate() + 1);
+          updateQuery.paymentDate = { $gte: d, $lt: nextDay };
+        }
+
+        let updateData = {};
+        if (op.new_amount) updateData.amount = op.new_amount;
+        if (op.new_description) updateData.description = op.new_description;
+        if (op.new_category) updateData.category = op.new_category;
+        if (op.new_action_date) updateData.paymentDate = new Date(op.new_action_date);
+
+        if (Object.keys(updateQuery).length > 1 && Object.keys(updateData).length > 0) {
+          const updated = await Transaction.findOneAndUpdate(updateQuery, { $set: updateData }, { new: true, sort: { paymentDate: -1 } });
+          if (updated) {
+            updatedItems.push(`📝 Updated ${updated.description || updated.category} to ₹${updated.amount}`);
+          }
+        }
+      }
+      return res.json({
+        reply: updatedItems.length > 0 ? updatedItems.join("\n") : `❌ Couldn't find a matching transaction to update. Try giving the exact description and date!`,
+        type: "text"
+      });
+    }
+
     if (intentData.intent === "list") {
       const filterQuery = { userId };
       if (intentData.filters.category)

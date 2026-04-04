@@ -27,14 +27,18 @@ Transaction:
 Return ONLY VALID JSON:
 
 {
-  "intent": "add | delete | sum | list | count",
+  "intent": "add | delete | update | sum | list | count",
   "operations": [
     {
       "amount": Number (optional),
       "description": String (optional, exact noun or phrase),
       "category": String (optional, categorize into: Food & Dining, Transportation, Housing, Utilities, Shopping, Entertainment, Health, Income, Other),
       "type": "expense | income",
-      "action_date": "YYYY-MM-DD" (optional, explicitly format date if mentioned or if it means today)
+      "action_date": "YYYY-MM-DD" (optional, explicitly format date if mentioned or if it means today),
+      "new_amount": Number (optional, ONLY for 'update' intent),
+      "new_description": String (optional, ONLY for 'update' intent),
+      "new_category": String (optional, ONLY for 'update' intent),
+      "new_action_date": "YYYY-MM-DD" (optional, ONLY for 'update' intent)
     }
   ],
   "filters": {
@@ -47,8 +51,9 @@ Rules:
 - "spent 500 on groceries and 200 on an uber today" → intent: "add", operations: [{ "amount": 500, "description": "groceries", "category": "Shopping", "type": "expense", "action_date": "${today}" }, { "amount": 200, "description": "uber", "category": "Transportation", "type": "expense", "action_date": "${today}" }]
 - "got 1000 salary yesterday" → intent: "add", operations: [{ "amount": 1000, "description": "salary", "category": "Income", "type": "income", "action_date": "(yesterday's date)" }]
 - "delete lunch transaction" → intent: "delete", operations: [{ "description": "lunch", "type": "expense" }]
-- If taking actions (add/delete), return all recognized entities in 'operations'.
-- For non-adding/deleting queries (sum, list), omit operations and use 'filters'.
+- "change my lunch expense from yesterday to 500" → intent: "update", operations: [{ "description": "lunch", "action_date": "(yesterday's date)", "new_amount": 500 }]
+- If taking actions (add/delete/update), return all recognized entities in 'operations'.
+- For non-modifying queries (sum, list), omit operations and use 'filters'.
 - no text outside JSON
 
 User: "${userMessage}"
