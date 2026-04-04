@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { LogOut, User, Wallet, BarChart3, Menu, X } from 'lucide-react';
+import { LogOut, User, Wallet, BarChart3, Menu, X, Bot } from 'lucide-react';
 
 export default function Navbar() {
     const { user, logout } = useContext(AuthContext);
@@ -32,6 +32,9 @@ export default function Navbar() {
                     <Link to="/transactions" className="text-gray-600 hover:text-indigo-600 font-medium flex items-center gap-2 transition-colors">
                         <Wallet className="w-4 h-4" /> Transactions
                     </Link>
+                    <Link to="/chat" className="text-gray-600 hover:text-indigo-600 font-medium flex items-center gap-2 transition-colors">
+                        <Bot className="w-4 h-4" /> FinChat
+                    </Link>
                     <Link to="/profile" className="text-gray-600 hover:text-indigo-600 font-medium flex items-center gap-2 transition-colors">
                         <User className="w-4 h-4" /> Profile
                     </Link>
@@ -52,6 +55,7 @@ export default function Navbar() {
                 <div className="md:hidden border-t py-4 px-4 flex flex-col gap-4 bg-white">
                     <Link to="/dashboard" className="text-gray-700 font-medium" onClick={() => setIsOpen(false)}>Dashboard</Link>
                     <Link to="/transactions" className="text-gray-700 font-medium" onClick={() => setIsOpen(false)}>Transactions</Link>
+                    <Link to="/chat" className="text-gray-700 font-medium" onClick={() => setIsOpen(false)}>FinChat</Link>
                     <Link to="/profile" className="text-gray-700 font-medium" onClick={() => setIsOpen(false)}>Profile</Link>
                     <button onClick={handleLogout} className="text-left text-red-600 font-medium">Logout</button>
                 </div>
