@@ -1,5 +1,7 @@
 # AI Expense Buddy
 
+🚀 **Live Demo:** https://ai-expense-buddy-finchat.vercel.app/
+
 AI Expense Buddy is a smart expense tracking web application built using the MERN stack. It helps users manage their daily expenses, track income, analyze spending patterns, and get AI-powered insights through an integrated chatbot.
 
 ---
